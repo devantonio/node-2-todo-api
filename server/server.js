@@ -44,7 +44,7 @@ app.get('/users', (req, res) => {
 
 
 
-
+//GET /todos/12345 
 app.get('/todos/:id', (req, res) => {
 	var id = req.params.id;
 
@@ -56,6 +56,7 @@ app.get('/todos/:id', (req, res) => {
 		if (!todo) {
 			return res.status(404).send();
 		}
+
 		res.send({todo});
 	}).catch((e) => {
 		res.status(400).send();
