@@ -66,7 +66,25 @@ app.get('/todos/:id', (req, res) => {
 });
 
 
+//create a delete route
 
+app.delete('/todos/:id', (req, res) => {
+	var id = req.params.id;
+
+	if (!ObjectID.isValid(id)) {
+		return res.status(404).send("not valid bozo");
+	}
+
+	Todo.findByIdAndRemove(id).then((todo) => {
+	  if (todo === null) {
+	  	return res.status(404).send("cant find");
+	  } 
+	  res.send(todo);
+}).catch((e) => {
+		res.status(400).send(e);
+	});
+
+});
 
 
 
