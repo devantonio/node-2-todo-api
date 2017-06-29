@@ -79,7 +79,7 @@ app.delete('/todos/:id', (req, res) => {
 	  if (todo === null) {
 	  	return res.status(404).send("cant find");
 	  } 
-	  res.send(todo);
+	  res.send({todo});
 }).catch((e) => {
 		res.status(400).send(e);
 	});
