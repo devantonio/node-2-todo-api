@@ -1,6 +1,8 @@
 //this file is only responsable for our routes
-var express = require('express');
-var bodyParser = require('body-parser');
+const _ = require('lodash');
+const express = require('express');
+const bodyParser = require('body-parser');
+const {ObjectID} = require('mongodb');
 
 var {mongoose} = require('./db/mongoose');
 var {Todo} = require('./models/todo');
@@ -9,7 +11,7 @@ var {User} = require('./models/user');
 var app = express();
 const port = process.env.PORT || 3000;
 
-const {ObjectID} = require('mongodb');
+
 
 app.use(bodyParser.json());
 
@@ -86,7 +88,32 @@ app.delete('/todos/:id', (req, res) => {
 
 });
 
+//patch is what you use when you want to update a resource
+app.patch('/todos/:id', (req, res) => {
+	var id = req.params.id;
+	var body = _.pick(req.body, ['text', 'completed']);//pick lets you pick single properties to update
 
+	if (!ObjectID.isValid(id)) {
+		return res.status(404).send("not valid bozo");
+	}
+	if (_.isBoolean(body.completed) && body.completed) {
+		body.completedAt = new Date().getTime();
+	} else {
+		body.completed = false;
+		body.completedAt = null;//when you want toremove a value from the database you can simply set it to null
+	}
+
+	Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+		if (!todo) {
+			return res.status(404).send();
+		}
+
+		res.send({todo});
+	}).catch((e) => {
+		res.status(400).send();
+	})
+	
+});
 
 
 app.listen(port, () => {
