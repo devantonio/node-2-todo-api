@@ -38,13 +38,7 @@ app.get('/todos', (req, res) => {
 	});
 });
 
-app.get('/users', (req, res) => {
-	Todo.find().then((users) => {
-		res.send({users});
-	}, (e) => {
-		res.status(400).send(e);
-	});
-});
+
 
 
 
@@ -115,6 +109,30 @@ app.patch('/todos/:id', (req, res) => {
 		res.status(400).send();
 	})
 	
+});
+
+
+app.post('/users', (req, res) => {
+	var body = _.pick(req.body, ['email', 'password']);
+	var user = new User({
+		email: body.email,
+		password: body.password
+	});
+
+	//console.log(req.body);
+	user.save().then(() => {
+		// generating the token by calling the method and 
+// adding it as a header
+		return user.generateAuthToken();//we can return it  since we know we're expecting a chaining promise
+	}).then((token) => {//this will be called with the token value
+		res.header('x-auth', token).send(user);//we have everyhing we need to make the response, we have the user and we have the token 
+		//header takes two arguments, the arguments are key value pairs/ the key is the header name and the value is what to set the header to
+		//our header name is going to be x-auth, when you prefix a header name with x- means your making a custom header 
+		//which means its not really a header that http supports by default, its a header your're using for specific purposes
+
+	}).catch((e) => {
+		res.status(400).send(e);
+	})
 });
 
 
