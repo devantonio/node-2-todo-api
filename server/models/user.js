@@ -64,7 +64,7 @@ UserSchema.methods.toJSON = function () {
 //bind a this keyword
 //we need a this keyword for our methods because the this keyword stores the individual document
 //which means we can create variable called user and setting it equal to this 
-UserSchema.methods.generateAuthToken = function () {
+UserSchema.methods.generateAuthToken = function () {//instance method
 	var user = this;
 	var access = 'auth';
 	//first argument takes a object of the data we want to sign
@@ -99,6 +99,61 @@ UserSchema.methods.generateAuthToken = function () {
 		//we're returning a value and that value will get passed as an success argument 
 		//for the next then call
 };
+
+//.statics is a object kind of like methods although everything you add on to it turns into a model
+//method as oppose to a instance method
+UserSchema.statics.findByToken = function (token) {
+	//instance methods get called with the individual document
+	//model methods gets called as the this binding 
+	var User = this;
+
+	var decoded; //this will store the decoded jwt values in hashing.js
+					//going to be the return result from jwt.verify(token, '123abc');
+//decoded is left undefined because jwt.verify will throw an error if anything goes wrong
+//if the secret doesnt match the secret the token was created with or if the token value was manipulated
+//that means we wantto be able to catch this error and do something with it
+//to do that we're going to use a try catch block
+//if any errors happen in the try block 
+//the code automatically stops execution and moves into the catch block 
+//lets you run some code there  and then it continues on with your program
+
+	try {
+		decoded = jwt.verify(token, 'abc123');//we want to try jwt.verify to see if it throws an error
+	}	catch (e) {
+		//this promise will get returned from find by token 
+		//then over inside of server.js it will get rejected so our the success case in server.js
+		//will never fire.the catch callback will though(in server.js)
+		// return new Promise((resolve, reject) => {
+		// 	reject();
+		// });
+		//SIMPLIFIED ABOVE
+		return Promise.reject();//i can also pass in value that will reject with a msg that will get
+		//passed to the error in catch when sending user in server.js
+	}		
+	//if we are able to successfully decode the token that was passed in as the header 
+	//we are going to call User.findOne to find the associated user if any 
+	//this going to return a promise 
+	//and we're going to return that in order to add some chaining 
+	//that means we can add a then call onto find by token over in server.js
+
+	return User.findOne({
+		//first thing we're looking for is the id
+		//looking for a user with the _id: property equals the one we have in decoded._id
+		'_id': decoded._id,
+		//we need to find a user whose token array has an object where the token property 
+		//equals the the token property we have passed into this function 
+		//to query a nested document 
+		//we're going to wrap our value in quotes
+		//this lets us query that value 
+//QUOTES ARE REQUIRED WHEN YOU HAVE A DOT IN THE VALUE
+		'tokens.token': token,//we want to find a value thats equal to the token argument thats passed in above
+		//we're going to do the exact same with access we're looking for a user 
+		//where in their tokens array the access property is set to auth
+		'tokens.access': 'auth'
+	});
+};
+
+
 
 var User = mongoose.model('User',UserSchema);
 

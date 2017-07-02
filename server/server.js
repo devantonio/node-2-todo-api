@@ -9,6 +9,7 @@ const {ObjectID} = require('mongodb');
 var {mongoose} = require('./db/mongoose');
 var {Todo} = require('./models/todo');
 var {User} = require('./models/user');
+var {authenticate} = require('./middleware/authenticate');
 
 var app = express();
 const port = process.env.PORT;
@@ -16,6 +17,9 @@ const port = process.env.PORT;
 
 
 app.use(bodyParser.json());
+
+
+
 
 app.post('/todos', (req, res) => {
 	var todo = new Todo({
@@ -111,7 +115,7 @@ app.patch('/todos/:id', (req, res) => {
 	
 });
 
-
+//this signup route will be public
 app.post('/users', (req, res) => {
 	var body = _.pick(req.body, ['email', 'password']);
 	var user = new User({
@@ -125,7 +129,7 @@ app.post('/users', (req, res) => {
 // adding it as a header
 		return user.generateAuthToken();//we can return it  since we know we're expecting a chaining promise
 	}).then((token) => {//this will be called with the token value
-		res.header('x-auth', token).send(user);//we have everyhing we need to make the response, we have the user and we have the token 
+		res.header('x-auth', token).send(user);//send back id and email//we have everyhing we need to make the response, we have the user and we have the token 
 		//header takes two arguments, the arguments are key value pairs/ the key is the header name and the value is what to set the header to
 		//our header name is going to be x-auth, when you prefix a header name with x- means your making a custom header 
 		//which means its not really a header that http supports by default, its a header your're using for specific purposes
@@ -135,6 +139,30 @@ app.post('/users', (req, res) => {
 	})
 });
 
+
+
+//TURNING EXPRESS ROUTES INTO PRIVATE ROUTES
+// THIS MEANS WE'LL REQUIRE AN X-AUTH TOKEN WE'RE GOING TO VALIDATE THAT TOKEN 
+// WE'RE GOING TO FIND THE USER ASSOCIATED WITH THAT TOKEN
+// THEN AND THEN WILL YOU WILL BE ABLE TO RUN THE ROUTE CODE
+
+
+
+
+// USING EXPRESS MIDDLEWARE THAT DOES ALL OF THAT 
+// VALIDATION AND VERIFICATION FOR US
+//this route will require authentication 
+//which means your going to need to provide a valid x-auth token
+//its going tofind the associated user and its going to send that user back 
+//much like we send the user back up above, send back the id and email
+//NOW THAT WE HAVE THIS ONE ROUTE PRIVITIZED, WE WANT TO BREAK OUT THIS CODE INTO SOME MIDDLEWARE
+//SO ALL OF OUR ROUTES CAN TAKE ADVANTAGE OF IT WITHOUT HAVING TO RUN ALL OF THESE FUNCTION CALLS
+app.get('/users/me', authenticate, (req, res) => {//authenticate// now this route will be using the middleware up above
+//now that we have request modified in our middleware 
+//we can use that data by accessing it right here
+	res.send(req.user);
+
+});
 
 app.listen(port, () => {
 	console.log(`started up at ${port}`);
