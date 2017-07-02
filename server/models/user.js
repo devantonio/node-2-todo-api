@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 
 // will store the schema for a user 
@@ -153,7 +154,34 @@ UserSchema.statics.findByToken = function (token) {
 	});
 };
 
+UserSchema.pre('save', function (next) {
+	var user = this;
 
+//now we can check if the password was modified
+//this is a really important thing 
+//theres going to be times where we save the document 
+//and we're never going to have updated the password
+//which mmeans the password will already be hashed 
+//imagine i save a document with a plain text password
+//then the password gets hashed 
+//later on i update something thats not the password like the email
+//this middleware is going to run again 
+//that means we're going to hash our hash and the program is going to break 
+//we're going to use a method available on our instance 
+//thats called user.isModified 
+//returns true if password is modified returns false if the password hasnt been modified 
+	if (user.isModified('password')) {
+		bcrypt.genSalt(10, (err, salt) => {
+ 		bcrypt.hash(user.password, salt, (err, hash) => {
+		user.password = hash;
+		next();
+ 	});
+ });
+	} else {
+		next(); //moving on with the middleware
+	}
+
+});
 
 var User = mongoose.model('User',UserSchema);
 
