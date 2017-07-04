@@ -71,6 +71,7 @@ UserSchema.methods.generateAuthToken = function () {//instance method
 	//first argument takes a object of the data we want to sign
 	//the second one is some secret value
 	//this returns our object, im going call toString to get our string token
+	//have to sign the token with jwt.sign
 	var token = jwt.sign({_id: user._id.toHexString(), access}, 'abc123').toString();
 
 //update the users token array

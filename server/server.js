@@ -1,3 +1,5 @@
+
+
 //this file is only responsable for our routes
 require('./config/config')
 
