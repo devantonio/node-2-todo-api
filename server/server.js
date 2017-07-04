@@ -118,6 +118,9 @@ app.patch('/todos/:id', (req, res) => {
 });
 
 //this signup route will be public
+//you get an auth x token back
+//but you lose the token when you sign in from a different device
+//cant login here because the email already exist
 app.post('/users', (req, res) => {
 	var body = _.pick(req.body, ['email', 'password']);
 	var user = new User({
@@ -165,6 +168,34 @@ app.get('/users/me', authenticate, (req, res) => {//authenticate// now this rout
 	res.send(req.user);
 
 });
+
+
+//dedicated route for logging in users 
+//trying to get a token so i can log in 
+//we'll make a post request to /users/login
+//when we make a post request to this route 
+//we'll be sending along some data, the email in the request body and the 
+//plain text password
+//this means we're going to need to find the user in the mongodb collection 
+//who one has a email matching the one that was sent in and 
+//two has a hashed password that equals the plain text password when passed through
+//the bcrypt compare method
+
+app.post('/users/login', (req, res) => {
+	var body = _.pick(req.body, ['email', 'password']);
+	//res.send(body);
+	User.findByCredentials(body.email, body.password).then((user) => {
+		return user.generateAuthToken().then((token) => {//when the user is foun geneate the auth token
+			//here we use x auth header to set the header, we set it equal to the token we just generated 
+			//and we send the response body back as the user 
+			res.header('x-auth', token).send(user);
+		});
+	}).catch((e) => {//catch err if cant find user
+		res.status(400).send();
+	});
+});
+
+
 
 app.listen(port, () => {
 	console.log(`started up at ${port}`);
