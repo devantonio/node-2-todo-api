@@ -183,7 +183,7 @@ app.get('/users/me', authenticate, (req, res) => {//authenticate// now this rout
 
 app.post('/users/login', (req, res) => {
 	var body = _.pick(req.body, ['email', 'password']);
-	//res.send(body);
+	
 	User.findByCredentials(body.email, body.password).then((user) => {
 		return user.generateAuthToken().then((token) => {//when the user is foun geneate the auth token
 			//here we use x auth header to set the header, we set it equal to the token we just generated 
