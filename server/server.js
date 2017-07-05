@@ -196,6 +196,25 @@ app.post('/users/login', (req, res) => {
 });
 
 
+//logout route need to delete the token of the currently logged in user 
+//now your not going to  need to pass the token in via the body
+//or some sort of url parameter 
+//instead we're just going to make this route private 
+//which means your're hoing to have to be authenticated to ever want to run the code
+//in our authentiction middleware, we store the token used in req.token = token
+//so we'll be able to grab that token value out 
+//to add authentiction all we have to do is specify the authenticate middleware 
+//just like we did for our other private route
+//we define removeToken in user.js
+app.delete('/users/me/token', authenticate, (req, res) => {
+	req.user.removeToken(req.token).then(() => {
+		res.status(200).send();
+	}, () => {
+		res.status(400).send();
+	});
+});
+
+
 
 app.listen(port, () => {
 	console.log(`started up at ${port}`);

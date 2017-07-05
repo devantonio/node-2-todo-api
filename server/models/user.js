@@ -102,6 +102,19 @@ UserSchema.methods.generateAuthToken = function () {//instance method
 		//for the next then call
 };
 
+UserSchema.methods.removeToken = function (token) {
+	//$pull is a mongodb method it lets you remove items from an array that match a cdrtain criteria 
+	var user = this;
+
+	return	user.update({//return tolet us chain together our call thats in serve.js
+			$pull: {
+				tokens: {
+					token: token
+				}
+			}
+	});
+};
+
 //.statics is a object kind of like methods although everything you add on to it turns into a model
 //method as oppose to a instance method
 UserSchema.statics.findByToken = function (token) {
