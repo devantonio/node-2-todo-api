@@ -14,6 +14,17 @@ var Todo = mongoose.model('Todo', {
 	completedAt: {
 		type: Number,
 		default: null
+	},
+	//the type is going to be an bject id. in order to set the type equal to an object id we're
+	//going to  go into mongoose, we're going to access schema then we'll access the types object
+	//and on there, there is a type object (ObjectId)
+	//this is what we need to set our type to to set up the creator property
+	//if a todo is going to be associated with a user we need a way to setup that association 
+	//and that happens right here 
+	//we store the id of the user 
+	_creator: {
+		type: mongoose.Schema.Types.ObjectId,
+		required: true
 	}
 });
 

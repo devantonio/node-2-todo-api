@@ -22,10 +22,15 @@ app.use(bodyParser.json());
 
 
 
-
-app.post('/todos', (req, res) => {
+//to make this route private we have to add the authenticate middleware
+//going to require that x-auth token is used 
+//with authenticate in place we now have access to the user and the token that was used 
+//all of that is configured in the authenticate middleware 
+//that means, in our post todos route we can now set the creator property when we make our new todo
+app.post('/todos', authenticate, (req, res) => {
 	var todo = new Todo({
-		text: req.body.text
+		text: req.body.text,
+		_creator: req.user._id
 	});
 
 	//console.log(req.body);
@@ -36,8 +41,18 @@ app.post('/todos', (req, res) => {
 	});
 });
 
-app.get('/todos', (req, res) => {
-	Todo.find().then((todos) => {
+//authenticate is going to require that x-auth token is used when you're fetching todos 
+app.get('/todos', authenticate, (req, res) => {
+	Todo.find({
+		//we're going to look for todos where the _creator property equals the id user that is currently authenticated 
+		//now we're only going to be returning todos that the user, whose logged in  
+		//actually created
+		//that means if userOne add some todos, UserTwo is not going to beable to view them when
+		//they try to fetch all of the todos
+		//its nolonger all of the todos listed in the database, its now the todos for the currently 
+		//logged in user
+		_creator: req.user._id
+	}).then((todos) => {
 		res.send({todos});
 	}, (e) => {
 		res.status(400).send(e);
@@ -57,7 +72,10 @@ app.get('/todos/:id', (req, res) => {
 		return res.status(404).send();
 	}
 
-	Todo.findById(id).then((todo) => {
+	Todo.findOne({
+		_id: id,
+		_creator: req.user.id
+	}).then((todo) => {
 		if (!todo) {
 			return res.status(404).send();
 		}
@@ -72,15 +90,18 @@ app.get('/todos/:id', (req, res) => {
 
 //create a delete route
 
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id', authenticate, (req, res) => {
 	var id = req.params.id;
 
 	if (!ObjectID.isValid(id)) {
 		return res.status(404).send("not valid bozo");
 	}
 
-	Todo.findByIdAndRemove(id).then((todo) => {
-	  if (todo === null) {
+	Todo.findOneAndRemove({
+		_id: id,
+		_creator: req.user._id
+	}).then((todo) => {
+	  if (!todo) {
 	  	return res.status(404).send("cant find");
 	  } 
 	  res.send({todo});
@@ -91,7 +112,7 @@ app.delete('/todos/:id', (req, res) => {
 });
 
 //patch is what you use when you want to update a resource
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todos/:id', authenticate, (req, res) => {
 	var id = req.params.id;
 	var body = _.pick(req.body, ['text', 'completed']);//pick lets you pick single properties to update
 
@@ -105,7 +126,7 @@ app.patch('/todos/:id', (req, res) => {
 		body.completedAt = null;//when you want toremove a value from the database you can simply set it to null
 	}
 
-	Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+	Todo.findOneAndUpdate({_id: id, _creator: req.user._id}, {$set: body}, {new: true}).then((todo) => {
 		if (!todo) {
 			return res.status(404).send();
 		}
