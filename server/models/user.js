@@ -72,7 +72,7 @@ UserSchema.methods.generateAuthToken = function () {//instance method
 	//the second one is some secret value
 	//this returns our object, im going call toString to get our string token
 	//have to sign the token with jwt.sign
-	var token = jwt.sign({_id: user._id.toHexString(), access}, 'abc123').toString();
+	var token = jwt.sign({_id: user._id.toHexString(), access}, process.env.JWT_SECRET).toString();
 
 //update the users token array
 //tokens is an empty array by default
@@ -133,7 +133,7 @@ UserSchema.statics.findByToken = function (token) {
 //lets you run some code there  and then it continues on with your program
 
 	try {
-		decoded = jwt.verify(token, 'abc123');//we want to try jwt.verify to see if it throws an error
+		decoded = jwt.verify(token, process.env.JWT_SECRET);//we want to try jwt.verify to see if it throws an error
 	}	catch (e) {
 		//this promise will get returned from find by token 
 		//then over inside of server.js it will get rejected so our the success case in server.js
